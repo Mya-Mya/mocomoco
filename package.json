@@ -36,7 +36,8 @@
     "react-native-safe-area-context": "3.3.2",
     "react-native-web": "0.17.1",
     "recoil": "^0.6.1",
-    "expo-web-browser": "~10.1.0"
+    "expo-web-browser": "~10.1.0",
+    "expo-cli": "5.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9"
