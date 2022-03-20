@@ -19,6 +19,11 @@ export default (p) => {
       p.onChange(newCode);
     }
   });
+  const theme = EditorView.theme({
+    "&": {
+      fontSize: "18px",
+    },
+  });
   const editor = new EditorView({
     state: EditorState.create({
       doc: p.initialCode,
@@ -28,6 +33,7 @@ export default (p) => {
         html(),
         onCodeEditorChange,
         EditorState.readOnly.of(p.readOnly),
+        theme,
       ],
     }),
     parent: p.ref.current,
