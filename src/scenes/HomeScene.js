@@ -23,10 +23,13 @@ import {
   useRecoilCallback,
   useRecoilValue,
   useRecoilValueLoadable,
+  atom,
+  useRecoilState,
 } from "recoil";
 import sceneState, { SCENE_NAMES } from "../states/sceneState";
 import editingFileIdState from "../states/editingFileIdState";
 import Dialog from "../components/Dialog";
+import XSSWarning from "../components/XSSWarning";
 
 export const useHomeActions = () => {
   /**
@@ -60,6 +63,11 @@ export const useHomeActions = () => {
 
   return { onOpenFilePress, onCreateClick, onDeleteFileConfirm, onAboutClick };
 };
+
+const isXSSWarningDialogOpenState = atom({
+  key: "Home.isXSSWarningVisible",
+  default: true,
+});
 
 const FileView = ({ fileId, onOpenFilePress, onDeleteFilePress }) => {
   const fileName = useRecoilValueLoadable(fileNameState(fileId));
@@ -114,6 +122,9 @@ export const HomeView = () => {
   );
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] =
     useState(false);
+  const [isXSSWarningDialogOpen, setIsXSSWarningDialogOpen] = useRecoilState(
+    isXSSWarningDialogOpenState
+  );
   return (
     <View flex={1}>
       <HStack flex={1} space="xs">
@@ -152,6 +163,19 @@ export const HomeView = () => {
           {
             label: "はい",
             onPress: () => actions.onDeleteFileConfirm(deletingFileId),
+            closeOnPress: true,
+          },
+        ]}
+      />
+      <Dialog
+        isOpen={isXSSWarningDialogOpen}
+        setIsOpen={setIsXSSWarningDialogOpen}
+        title="はじめに"
+        message=""
+        children={<XSSWarning />}
+        selections={[
+          {
+            label: "閉じる",
             closeOnPress: true,
           },
         ]}
