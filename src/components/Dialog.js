@@ -4,7 +4,7 @@ import { Modal, Text, Button, HStack } from "native-base";
 /**
  * @typedef {object} SelectionProp
  * @property {string} label
- * @property {()=>void} onPress
+ * @property {()=>void} onPress?
  * @property {string} variant?
  * @property {boolean} closeOnPress?
  */
@@ -17,8 +17,9 @@ import { Modal, Text, Button, HStack } from "native-base";
 const SelectionButton = (p) => {
   const variant = p.selectionProp.variant || "solid";
   const closeOnPress = p.selectionProp.closeOnPress || true;
+  const handlePress = p.selectionProp.onPress || (() => {});
   const onPress = () => {
-    p.selectionProp.onPress();
+    handlePress();
     if (closeOnPress) p.close();
   };
   return (
@@ -34,6 +35,7 @@ const SelectionButton = (p) => {
  * @param {boolean} p.setIsOpen
  * @param {string} p.title
  * @param {string} p.message
+ * @param {JSX.Element} p.children?
  * @param {SelectionProp[]}p.selections
  */
 export default (p) => {
@@ -44,6 +46,7 @@ export default (p) => {
         <Modal.Header>{p.title}</Modal.Header>
         <Modal.Body>
           <Text>{p.message}</Text>
+          {p.children && p.children}
         </Modal.Body>
         <Modal.Footer>
           <HStack space="xs">
