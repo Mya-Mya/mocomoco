@@ -26,7 +26,7 @@ import {
 } from "recoil";
 import sceneState, { SCENE_NAMES } from "../states/sceneState";
 import editingFileIdState from "../states/editingFileIdState";
-import Dialog from "../tools/Dialog";
+import Dialog from "../components/Dialog";
 
 export const useHomeActions = () => {
   /**
@@ -114,7 +114,6 @@ export const HomeView = () => {
   );
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] =
     useState(false);
-
   return (
     <View flex={1}>
       <HStack flex={1} space="xs">
