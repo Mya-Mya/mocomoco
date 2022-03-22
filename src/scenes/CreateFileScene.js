@@ -13,6 +13,8 @@ import {
   Skeleton,
   TextArea,
   ScrollView,
+  Pressable,
+  Select,
 } from "native-base";
 import useHTMLEditor from "./useHTMLEditor";
 import {
@@ -23,6 +25,7 @@ import {
   useRecoilStateLoadable,
   useRecoilValue,
   useRecoilValueLoadable,
+  DefaultValue,
 } from "recoil";
 import {
   fileContentState,
@@ -32,104 +35,125 @@ import {
 import * as examplehtmlsStates from "../states/examplehtmlsStates";
 import sceneState, { SCENE_NAMES } from "../states/sceneState";
 export const useCreateFileActions = () => {
+  const onEnter = useRecoilCallback(({ set }) => () => {
+    console.log("CreateFile.onEnter");
+    for (let state of [
+      channelState,
+      draftFileNameState,
+      localFileContentState,
+      selectingExampleHtmlIdState,
+    ])
+      set(state, new DefaultValue());
+  });
   const onBackPress = useRecoilCallback(({ set }) => () => {
     console.log("CreateFile.onBackPress");
     set(sceneState, SCENE_NAMES.HOME);
   });
-  const onCreateEmptyFilePress = useRecoilCallback(
+  const onChannelSelected = useRecoilCallback(({ set }) => (channel) => {
+    console.log("CreateFile.onChannelSelected", channel);
+    set(channelState, channel);
+  });
+  const onCreateFilePress = useRecoilCallback(
     ({ set, snapshot }) =>
       async () => {
-        console.log("CreateFile.onCreateEmptyFilePress");
-        const fileName = await snapshot.getPromise(editingFileNameState);
+        console.log("CreateFile.onCreateFilePress");
         const fileId = Date.now();
+        const draftFileName = await snapshot.getPromise(draftFileNameState);
+        const fileName = draftFileName === "" ? "NewFile.html" : draftFileName;
+        const code = await snapshot.getPromise(draftCodeState);
         set(fileIdsState, (fileIds) => [fileId, ...fileIds]);
-        set(fileNameState(fileId), fileName === "" ? "New File" : fileName);
-        set(fileContentState(fileId), "");
-        set(sceneState, SCENE_NAMES.HOME);
-      }
-  );
-  const onCreateExampleHtmlPress = useRecoilCallback(
-    ({ set, snapshot }) =>
-      async () => {
-        console.log("CreateFile.onCreateExampleHtmlPress", fileName);
-        const fileName = await snapshot.getPromise(editingFileNameState);
-        const title = await snapshot.getPromise(selectingExampleHtmlTitleState);
-        const code = await snapshot.getPromise(selectingExampleHtmlCodeState);
-        const fileId = Date.now();
-        set(fileIdsState, (fileIds) => [fileId, ...fileIds]);
-        set(
-          fileNameState(fileId),
-          fileName === "" ? title + ".html" : fileName
-        );
+        set(fileNameState(fileId), fileName);
         set(fileContentState(fileId), code);
         set(sceneState, SCENE_NAMES.HOME);
       }
   );
-  const onExampleHtmlNextPress = useRecoilCallback(
+  const onLocalFileSelected = useRecoilCallback(
     ({ set, snapshot }) =>
-      async () => {
-        console.log("CreateFile.onExampleHtmlNextPress");
-        const index = await snapshot.getPromise(selectingExampleHtmlIndexState);
-        const num = await snapshot.getPromise(numExampleHtmlState);
-        const newIndex = (index + 1) % num;
-        set(selectingExampleHtmlIndexState, newIndex);
-      }
-  );
-  const onExampleHtmlPrevPress = useRecoilCallback(
-    ({ set, snapshot }) =>
-      async () => {
-        console.log("CreateFile.onExampleHtmlPrevPress");
-        const index = await snapshot.getPromise(selectingExampleHtmlIndexState);
-        const num = await snapshot.getPromise(numExampleHtmlState);
-        const newIndex = (index - 1 + num) % num;
-        set(selectingExampleHtmlIndexState, newIndex);
+      async (event) => {
+        console.log("CreateFile.onLocalFileSelected");
+        const file = event.target.files[0];
+        const name = file.name;
+        if (await snapshot.getPromise(isDraftFileNameEmptyState))
+          set(draftFileNameState, name);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          set(localFileContentState, content);
+        };
+        reader.readAsText(file);
       }
   );
   return {
+    onEnter,
     onBackPress,
-    onCreateEmptyFilePress,
-    onCreateExampleHtmlPress,
-    onExampleHtmlNextPress,
-    onExampleHtmlPrevPress,
+    onCreateFilePress,
+    onChannelSelected,
+    onLocalFileSelected,
   };
 };
 
-const numExampleHtmlState = selector({
-  key: "CraeteFile.numExampleHtmlState",
-  get: ({ get }) => get(examplehtmlsStates.idsState).length,
+const selectingExampleHtmlIdState = atom({
+  key: "CreateFile.selectingExampleHtmlIdState",
+  default: null,
 });
 
-const selectingExampleHtmlIndexState = atom({
-  key: "CreateFile.selectingExampleHtmlIndex",
-  default: 0,
-});
-const selectingExampleHtmlIdState = selector({
-  key: "CreateFile.selectingExampleHtmlIdState",
-  get: ({ get }) => {
-    const ids = get(examplehtmlsStates.idsState);
-    const index = get(selectingExampleHtmlIndexState);
-    return ids[index % ids.length];
-  },
-});
-const selectingExampleHtmlTitleState = selector({
-  key: "CreateFile.selectingExampleHtmlTitleState",
-  get: ({ get }) =>
-    get(examplehtmlsStates.titleState(get(selectingExampleHtmlIdState))),
-});
 const selectingExampleHtmlCodeState = selector({
   key: "CreateFile.selectingExampleHtmlCodeState",
   get: ({ get }) =>
     get(examplehtmlsStates.codeState(get(selectingExampleHtmlIdState))),
 });
-const editingFileNameState = atom({
-  key: "CreateFile.fileNameState",
-  default: "",
+
+const localFileContentState = atom({
+  key: "CreateFile.localFileContentState",
+  default: null,
 });
 
-const ExampleHTMLsView = () => {
-  const actions = useCreateFileActions();
-  const title = useRecoilValueLoadable(selectingExampleHtmlTitleState);
-  const code = useRecoilValueLoadable(selectingExampleHtmlCodeState);
+const CHANNELS = {
+  UNSELECTED: "UNSELECTED",
+  EMPTY: "EMPTY",
+  LOCAL: "LOCAL",
+  EXAMPLE_HTMLS: "EXAMPLE_HTMLS",
+};
+const channelState = atom({
+  key: "CreateFile.channelState",
+  default: CHANNELS.UNSELECTED,
+});
+const anyChannelSelectedState = selector({
+  key: "CreateFile.anyChannelSelectedState",
+  get: ({ get }) => get(channelState) !== CHANNELS.UNSELECTED,
+});
+const draftCodeState = selector({
+  key: "CreateFile.draftCodeState",
+  get: ({ get }) => {
+    const channel = get(channelState);
+    switch (channel) {
+      case CHANNELS.UNSELECTED:
+      case CHANNELS.EMPTY:
+        return "";
+      case CHANNELS.LOCAL:
+        return get(localFileContentState);
+      case CHANNELS.EXAMPLE_HTMLS:
+        return get(selectingExampleHtmlCodeState);
+    }
+  },
+});
+const draftFileNameState = atom({
+  key: "CreateFile.draftFileNameState",
+  default: "",
+});
+const isDraftFileNameEmptyState = selector({
+  key: "CreateFile.isDraftFileNameEmptyState",
+  get: ({ get }) => get(draftFileNameState) === "",
+});
+const isSaveableState = selector({
+  key: "CreateFile.isSaveableState",
+  get: ({ get }) =>
+    !get(isDraftFileNameEmptyState) && get(anyChannelSelectedState),
+});
+
+const DraftCodeView = () => {
+  const anyChannelSelected = useRecoilValue(anyChannelSelectedState);
+  const code = useRecoilValueLoadable(draftCodeState);
   const editorRef = useRef(null);
   let editor = null;
   useEffect(() => {
@@ -144,76 +168,142 @@ const ExampleHTMLsView = () => {
       return () => editor.destroy();
     }
   }, [code]);
+  return (
+    <ScrollView maxH="500px">
+      <Skeleton.Text
+        lineHeight="lg"
+        lines={6}
+        isLoaded={code.state === "hasValue" && anyChannelSelected}
+      >
+        <View ref={editorRef} />
+      </Skeleton.Text>
+    </ScrollView>
+  );
+};
+const DraftView = () => {
+  const [draftFileName, setDraftFileName] = useRecoilState(draftFileNameState);
+  return (
+    <VStack flexGrow={1} space="xs" width="full" alignItems="stretch">
+      <Input
+        placeholder="ファイル名は?"
+        value={draftFileName}
+        onChangeText={setDraftFileName}
+      />
+      <DraftCodeView />
+    </VStack>
+  );
+};
+
+const ExampleHtmlsSelectView = () => {
+  const [selectingExampleHtmlId, setSelectingExampleHtmlId] = useRecoilState(
+    selectingExampleHtmlIdState
+  );
+  const idAndTitlePairs =
+    useRecoilValueLoadable(
+      examplehtmlsStates.idAndTitlePairsState
+    ).valueMaybe() || [];
 
   return (
-    <VStack
-      flex={1}
-      flexGrow={1}
-      alignItems="stretch"
-      justifyContent="center"
-      space="xs"
+    <Select
+      selectedValue={selectingExampleHtmlId}
+      accessibilityLabel="HTML例を選択"
+      placeholder="HTML例を選択"
+      onValueChange={setSelectingExampleHtmlId}
     >
-      <HStack justifyContent="space-between" alignItems="center">
-        <Button variant="ghost" onPress={actions.onExampleHtmlPrevPress}>
-          ←
-        </Button>
-        <Text>{title.valueMaybe() || ""}</Text>
-        <Button variant="ghost" onPress={actions.onExampleHtmlNextPress}>
-          →
-        </Button>
-      </HStack>
-      <ScrollView>
-        <Skeleton isLoaded={code.state === "hasValue"}>
-          <View maxH="500px" ref={editorRef} />
-        </Skeleton>
-      </ScrollView>
-    </VStack>
+      {idAndTitlePairs.map(({ id, title }) => (
+        <Select.Item label={title} value={id} key={id} />
+      ))}
+    </Select>
+  );
+};
+
+const ChannelSelectionView = ({ channel, channelLabel, children }) => {
+  const actions = useCreateFileActions();
+  const isSelected = useRecoilValue(channelState) === channel;
+  const getBgColor = (isHovered, isPressed) => {
+    if (isSelected) return "blueGray.200";
+    if (isPressed) return "blueGray.300";
+    if (isHovered) return "blueGray.200";
+    return "blueGray.100";
+  };
+  return (
+    <Pressable
+      onPress={() => actions.onChannelSelected(channel)}
+      flexGrow={isSelected ? 1 : 0}
+    >
+      {({ isHovered, isPressed }) => (
+        <Box
+          flexGrow={1}
+          p="3"
+          rounded="lg"
+          bgColor={getBgColor(isHovered, isPressed)}
+          borderWidth={isSelected ? 2 : 0}
+          borderColor="primary.500"
+        >
+          <Heading>{channelLabel}</Heading>
+          {isSelected && children}
+        </Box>
+      )}
+    </Pressable>
   );
 };
 
 export const CreateFileView = () => {
   const actions = useCreateFileActions();
-  const [fileName, setFileName] = useRecoilState(editingFileNameState);
-
+  const isSaveable = useRecoilValue(isSaveableState);
+  useEffect(actions.onEnter, []);
   return (
     <VStack
-      space="md"
+      space="xl"
       flex={1}
-      alignItems="center"
+      alignItems="stretch"
       justifyContent="space-between"
       padding="3"
     >
-      <VStack space="xs">
-        <HStack alignItems="center" space="xs">
-          <Button variant="outline" onPress={actions.onBackPress}>
-            ←
-          </Button>
-          <Heading size="lg">新しいファイルを作ります</Heading>
-        </HStack>
-        <Input
-          placeholder="ファイル名を書きましょう"
-          value={fileName}
-          onChangeText={setFileName}
-        />
-      </VStack>
+      <HStack alignItems="center" space="xs" justifyContent="center">
+        <Button variant="outline" onPress={actions.onBackPress}>
+          ←
+        </Button>
+        <Heading size="lg">新しいファイルを作ります</Heading>
+      </HStack>
       <HStack
         flexGrow={1}
         width="full"
         space="xs"
         justifyContent="space-around"
       >
-        <VStack w="40%">
-          <Button onPress={actions.onCreateEmptyFilePress}>
-            空のファイルを作成
-          </Button>
-          <View flexGrow={1} />
+        <VStack w="40%" space="md">
+          <ChannelSelectionView
+            channel={CHANNELS.EMPTY}
+            channelLabel="空白のページ"
+          >
+            <Text>真っ白なページを作ります</Text>
+          </ChannelSelectionView>
+          <ChannelSelectionView
+            channel={CHANNELS.LOCAL}
+            channelLabel="ローカルのファイル"
+          >
+            <input type="file" onChange={actions.onLocalFileSelected} />
+          </ChannelSelectionView>
+          <ChannelSelectionView
+            channel={CHANNELS.EXAMPLE_HTMLS}
+            channelLabel="サンプルのHTML"
+          >
+            <ExampleHtmlsSelectView />
+          </ChannelSelectionView>
         </VStack>
-        <VStack w="40%">
-          <Button onPress={actions.onCreateExampleHtmlPress}>
-            テンプレートから作成
-          </Button>
-          <ExampleHTMLsView />
-        </VStack>
+        <View w="40%">
+          <DraftView />
+        </View>
+      </HStack>
+      <HStack justifyContent="flex-end">
+        <Button
+          onPress={actions.onCreateFilePress}
+          size="lg"
+          isDisabled={!isSaveable}
+        >
+          作成
+        </Button>
       </HStack>
     </VStack>
   );
