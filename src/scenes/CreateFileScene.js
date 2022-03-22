@@ -12,6 +12,7 @@ import {
   Spinner,
   Skeleton,
   TextArea,
+  ScrollView,
 } from "native-base";
 import useHTMLEditor from "./useHTMLEditor";
 import {
@@ -129,11 +130,26 @@ const ExampleHTMLsView = () => {
   const actions = useCreateFileActions();
   const title = useRecoilValueLoadable(selectingExampleHtmlTitleState);
   const code = useRecoilValueLoadable(selectingExampleHtmlCodeState);
+  const editorRef = useRef(null);
+  let editor = null;
+  useEffect(() => {
+    if (editorRef.current) {
+      editor = useHTMLEditor({
+        initialCode: code.valueMaybe() || "",
+        onChange: (code) => {},
+        ref: editorRef,
+        readOnly: true,
+        fontSize: 12,
+      });
+      return () => editor.destroy();
+    }
+  }, [code]);
+
   return (
     <VStack
       flex={1}
       flexGrow={1}
-      alignItems="center"
+      alignItems="stretch"
       justifyContent="center"
       space="xs"
     >
@@ -141,14 +157,16 @@ const ExampleHTMLsView = () => {
         <Button variant="ghost" onPress={actions.onExampleHtmlPrevPress}>
           ←
         </Button>
-        <Skeleton isLoaded={code.state === "hasValue"}>
-          <TextArea flexGrow={1} value={code.contents} disabled={true} />
-        </Skeleton>
+        <Text>{title.valueMaybe() || ""}</Text>
         <Button variant="ghost" onPress={actions.onExampleHtmlNextPress}>
           →
         </Button>
       </HStack>
-      <Text>{title.valueMaybe() || ""}</Text>
+      <ScrollView>
+        <Skeleton isLoaded={code.state === "hasValue"}>
+          <View maxH="500px" ref={editorRef} />
+        </Skeleton>
+      </ScrollView>
     </VStack>
   );
 };
@@ -184,17 +202,17 @@ export const CreateFileView = () => {
         space="xs"
         justifyContent="space-around"
       >
-        <VStack>
-          <View flexGrow={1} />
+        <VStack w="40%">
           <Button onPress={actions.onCreateEmptyFilePress}>
             空のファイルを作成
           </Button>
+          <View flexGrow={1} />
         </VStack>
-        <VStack>
-          <ExampleHTMLsView />
+        <VStack w="40%">
           <Button onPress={actions.onCreateExampleHtmlPress}>
             テンプレートから作成
           </Button>
+          <ExampleHTMLsView />
         </VStack>
       </HStack>
     </VStack>
