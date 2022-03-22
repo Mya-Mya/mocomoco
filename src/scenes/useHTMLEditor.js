@@ -10,9 +10,11 @@ import { html } from "@codemirror/lang-html";
  * @param {string} p.initialCode
  * @param {(string)=>void} p.onChange
  * @param {boolean} p.readOnly
+ * @param {number} p.fontSize?
  *
  */
 export default (p) => {
+  const fontSize = p.fontSize || 18;
   const onCodeEditorChange = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
       const newCode = editor.state.doc.toJSON().join("\n");
@@ -21,7 +23,7 @@ export default (p) => {
   });
   const theme = EditorView.theme({
     "&": {
-      fontSize: "18px",
+      fontSize: `${fontSize}px`,
     },
   });
   const editor = new EditorView({
