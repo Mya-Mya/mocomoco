@@ -124,9 +124,11 @@ export const FileEditorView = () => {
           >
             ←
           </Button>
-          <Button variant="outline" onPress={actions.onBackWithoutSavePress}>
-            保存せずに戻る
-          </Button>
+          {needToSave && (
+            <Button variant="outline" onPress={actions.onBackWithoutSavePress}>
+              保存せずに戻る
+            </Button>
+          )}
         </HStack>
         <Skeleton.Text lines={2} isLoaded={fileName.state === "hasValue"}>
           <Input value={editingFileName} onChangeText={setEditingFileName} />
