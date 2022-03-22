@@ -24,6 +24,19 @@ export const idsState = selector({
   },
 });
 
+export const idAndTitlePairsState = selector({
+  key: "examplehtmls.idAndTitlePairsState",
+  get: ({ get }) => {
+    const idAndTitlePairs = get(contentsState).map(({ id, title }) => ({
+      id,
+      title,
+    }));
+
+    console.log("examplehtmls.idAndTitlePairsState", idAndTitlePairs);
+    return idAndTitlePairs;
+  },
+});
+
 export const titleState = selectorFamily({
   key: "examplehtmls.title",
   get:
