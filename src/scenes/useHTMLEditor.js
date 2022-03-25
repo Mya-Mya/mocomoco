@@ -20,6 +20,7 @@ import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { html } from "@codemirror/lang-html";
+import "./htmlEditorStyle.css";
 
 /**
  * @param {object} p
