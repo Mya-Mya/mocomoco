@@ -1,7 +1,24 @@
 import React, { useRef, useEffect } from "react";
-import { EditorView, keymap } from "@codemirror/view";
-import { basicSetup, EditorState } from "@codemirror/basic-setup";
+import {
+  EditorView,
+  keymap,
+  highlightSpecialChars,
+  drawSelection,
+  highlightActiveLine,
+  dropCursor,
+} from "@codemirror/view";
+import { EditorState } from "@codemirror/basic-setup";
 import { indentWithTab } from "@codemirror/commands";
+import { history, historyKeymap } from "@codemirror/history";
+import { foldGutter, foldKeymap } from "@codemirror/fold";
+import { indentOnInput } from "@codemirror/language";
+import { lineNumbers, highlightActiveLineGutter } from "@codemirror/gutter";
+import { bracketMatching } from "@codemirror/matchbrackets";
+import { closeBrackets, closeBracketsKeymap } from "@codemirror/closebrackets";
+import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
+import { rectangularSelection } from "@codemirror/rectangular-selection";
+import { defaultHighlightStyle } from "@codemirror/highlight";
 import { html } from "@codemirror/lang-html";
 
 /**
@@ -30,7 +47,23 @@ export default (p) => {
     state: EditorState.create({
       doc: p.initialCode,
       extensions: [
-        basicSetup,
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        highlightSpecialChars(),
+        history(),
+        //foldGutter(),
+        drawSelection(),
+        dropCursor(),
+        EditorState.allowMultipleSelections.of(true),
+        indentOnInput(),
+        defaultHighlightStyle.fallback,
+        bracketMatching(),
+        closeBrackets(),
+        autocompletion(),
+        rectangularSelection(),
+        highlightActiveLine(),
+        highlightSelectionMatches(),
+        //basic setup end
         keymap.of([indentWithTab]),
         html(),
         onCodeEditorChange,
