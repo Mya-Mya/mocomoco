@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
 } from "@mui/material";
 
 export type SelectionProp = {
@@ -45,7 +46,7 @@ export default (p: {
     <Dialog open={p.isOpen} onClose={close}>
       <DialogTitle>{p.title}</DialogTitle>
       <DialogContent>
-        <DialogContent>{p.message}</DialogContent>
+        {p.message && <DialogContentText>{p.message}</DialogContentText>}
         {p.children}
       </DialogContent>
       <DialogActions>
