@@ -1,4 +1,4 @@
-import { atom, selector, selectorFamily } from "recoil";
+import { selector, selectorFamily } from "recoil";
 import { createClient } from "microcms-js-sdk";
 
 const client = createClient({
@@ -14,7 +14,6 @@ const contentsState = selector({
     return contents;
   },
 });
-
 export const idsState = selector({
   key: "examplehtmls.ids",
   get: ({ get }) => {
