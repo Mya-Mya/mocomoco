@@ -6,28 +6,12 @@ export default {
   component: FileView,
 } as ComponentMeta<typeof FileView>;
 
-export const Normal: ComponentStory<typeof FileView> = (args) => (
+export const Default: ComponentStory<typeof FileView> = (args) => (
   <FileView {...args} />
 );
-Normal.args = {
-  isLoading: false,
+Default.args = {
   key: "key",
   name: "index.html",
-  onOpenClick: () => {
-    console.log("onOpenClick");
-  },
-  onDeleteClick: () => {
-    console.log("onDeleteClick");
-  },
-};
-
-export const Loading: ComponentStory<typeof FileView> = (args) => (
-  <FileView {...args} />
-);
-Loading.args = {
-  isLoading: true,
-  key: "key",
-  name: undefined,
   onOpenClick: () => {
     console.log("onOpenClick");
   },

@@ -1,19 +1,11 @@
 import React from "react";
-import {
-  ListItem,
-  Button,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-} from "@mui/material";
+import { ListItem, Button, ListItemButton, ListItemText } from "@mui/material";
 export default (p: {
-  isLoading: boolean;
   key: string;
   name: string | undefined;
   onOpenClick: () => void;
   onDeleteClick: () => void;
 }) => {
-  if (p.isLoading) return <Skeleton variant="rectangular" />;
   return (
     <ListItem
       key={p.key}
@@ -22,6 +14,7 @@ export default (p: {
           削除
         </Button>
       }
+      disablePadding
     >
       <ListItemButton onClick={p.onOpenClick}>
         <ListItemText primary={p.name || ""} />

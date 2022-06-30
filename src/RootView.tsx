@@ -3,7 +3,7 @@ import { useRecoilValue } from "recoil";
 import { AboutView } from "./scenes/AboutScene";
 import { CreateFileView } from "./scenes/CreateFileScene";
 import { FileEditorView } from "./scenes/FileEditorScene";
-import { HomeView } from "./scenes/HomeScene";
+import { HomeView } from "./scenes/Home/HomeView";
 import sceneState, { SCENE_NAMES } from "./states/sceneState";
 //import { Routes, Route, BrowserRouter } from "react-router-dom";
 
